@@ -1,13 +1,24 @@
 import {getTokamakContract} from '../../../utils/contract';
 import {convertNumber} from '../../../utils/number';
 import store from 'store';
+// import { ethers } from "ethers";
+// import { Pool } from "@uniswap/v3-sdk";
+// import { Token } from "@uniswap/sdk-core";
+// import { abi as IUniswapV3PoolABI } from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 
 export const fetchAirdropPayload = async () => {
   const user = store.getState().user.data;
   const {address: account, library} = user;
   const AirdropVault = getTokamakContract('Airdrop', library);
-  
   let roundInfo: any = [];
+  // const poolAddress = "0x516e1af7303a94f81e91e4ac29e20f4319d4ecaf"
+  // const poolContract = new ethers.Contract(
+  //   poolAddress,
+  //   IUniswapV3PoolABI,
+  //   library
+  // );
+  // console.log(poolContract);
+  // console.log(await poolContract.to)
   let claimedAmount;
   let unclaimed;
   try {

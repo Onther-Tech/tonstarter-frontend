@@ -23,6 +23,8 @@ import {Scrollbars} from 'react-custom-scrollbars-2';
 import {LoadingComponent} from 'components/Loading';
 import {fetchAirdropPayload} from './utils/fetchAirdropPayload';
 import {selectUser} from 'store/app/user.reducer';
+// import useGraphQueries from '../../hooks/useGraphQueries';
+// import { GET_POOL_INFO } from './utils/subgraph';
 
 type Round = {
   allocatedAmount: string;
@@ -72,6 +74,7 @@ export const AirdropModal = () => {
   const {
     data: {address, library},
   } = useAppSelector(selectUser);
+  // const {poolInfo} = useGraphQueries('rinkeby')
   const dispatch = useAppDispatch();
   const {colorMode} = useColorMode();
   const theme = useTheme();
@@ -99,7 +102,12 @@ export const AirdropModal = () => {
     async function callAirDropData() {
       const res = await fetchAirdropPayload();
       const {roundInfo, claimedAmount, unclaimedAmount} = res;
-
+      // const info = await poolInfo
+      // .fetchMore({
+      //   query: GET_POOL_INFO
+      // })
+      // console.log(info.data)
+      // console.log(roundInfo)
       setAirdropData(roundInfo);
       availableAmount(roundInfo, claimedAmount, unclaimedAmount);
     }

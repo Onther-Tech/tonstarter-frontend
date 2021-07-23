@@ -6,6 +6,7 @@ import {convertToWei} from 'utils/number';
 import {DEPLOYED} from 'constants/index';
 import * as StakeTON from 'services/abis/StakeTON.json';
 import {BASE_PROVIDER} from 'constants/index'
+import { BigNumber } from 'ethers';
 
 type StakeToLayer2 = {
   userAddress: string | null | undefined;
@@ -37,7 +38,7 @@ export const stakeL2 = async (args: StakeToLayer2) => {
   const currentBlock = await BASE_PROVIDER.getBlockNumber();
   const endBlock = Number(miningEndTime);
   const TON = getTokamakContract('TON', library);
-  const tonBalance = await TON.balanceOf(userAddress);
+  const tonBalance = await TON.balanceOf(contractAddress);
   const tonAmount = convertToWei(amount);
 
   if (currentBlock > endBlock - Number(globalWithdrawalDelay)) {

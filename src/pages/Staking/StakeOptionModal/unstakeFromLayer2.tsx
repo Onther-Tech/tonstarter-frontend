@@ -135,6 +135,7 @@ export const UnStakeFromLayer2Modal = () => {
                   amount: value.toString(),
                   contractAddress: data.data.contractAddress,
                   status: data?.data?.status,
+                  maxBalance: data?.data?.maxBalance,
                   library: library,
                   handleCloseModal: handleCloseModal(),
                 })
