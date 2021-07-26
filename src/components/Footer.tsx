@@ -6,7 +6,6 @@ import {IconGithub} from './Icons/IconGithub';
 import {IconMedium} from './Icons/IconMedium';
 import {IconTwitter} from './Icons/IconTwitter';
 import {EmailIcon} from '@chakra-ui/icons';
-
 const socialLinks = [
   {
     title: 'Telegram',
@@ -71,7 +70,13 @@ export const Footer = () => {
 
   const bgColor = colorMode === 'light' ? 'gray.50' : 'black.200';
   return (
-    <Container maxW={'full'} bg={bgColor} pl={'2.5em'} pr={'2.5em'}>
+    <Container
+      maxW={'full'}
+      bg={bgColor}
+      pl={'2.5em'}
+      pr={'2.5em'}
+      pos="absolute"
+      bottom={0}>
       <Flex
         flexDirection={{base: 'column', md: 'row'}}
         justifyContent={'space-between'}

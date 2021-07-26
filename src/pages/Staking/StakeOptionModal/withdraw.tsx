@@ -33,7 +33,6 @@ export const WithdrawalOptionModal = () => {
   const [withdrawBalance, setWithdrawBalance] = useState<string | undefined>(
     undefined,
   );
-
   useEffect(() => {
     async function withdrawPayload(data: any) {
       const result = await fetchWithdrawPayload(
@@ -41,7 +40,6 @@ export const WithdrawalOptionModal = () => {
         data.account,
         data.contractAddress,
       );
-      console.log(result);
       return setWithdrawBalance(result === undefined ? '0.00' : result);
     }
     withdrawPayload(data);

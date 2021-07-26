@@ -33,7 +33,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = (props) => {
       marginLeft="2"
       onClick={toggleColorMode}
       bg={'transparent'}
-      icon={<SwitchIcon />}
+      icon={<SwitchIcon w={35} h={35} />}
       _hover={{
         color:
           colorMode === 'light'

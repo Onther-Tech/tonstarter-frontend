@@ -1,11 +1,7 @@
 import {getAddress} from '@ethersproject/address';
 import {Contract} from '@ethersproject/contracts';
 import {AddressZero} from '@ethersproject/constants';
-import {
-  JsonRpcSigner,
-  Web3Provider,
-  JsonRpcProvider,
-} from '@ethersproject/providers';
+import {JsonRpcSigner, Web3Provider} from '@ethersproject/providers';
 
 import * as TonABI from 'services/abis/TON.json';
 import * as WtonABI from 'services/abis/WTON.json';
@@ -17,17 +13,19 @@ import * as StakeTON from 'services/abis/StakeTON.json';
 import * as StakeVaultLogic from 'services/abis/Stake1Logic.json';
 import * as StakeVault from 'services/abis/Stake1Vault.json';
 // import * as StakeVaultStorage from 'services/abis/StakeVaultStorage.json';
-import * as AirdropVaultABI from 'services/abis/AirdropVault.json';
-import {
-  REACT_APP_TOKAMAK_LAYER2,
-  REACT_APP_TON,
-  REACT_APP_TOS,
-  REACT_APP_DEPOSIT_MANAGER,
-  REACT_APP_SEIG_MANAGER,
-  REACT_APP_WTON,
-  REACT_APP_STAKE1_PROXY,
-  REACT_APP_AIRDROP,
-} from 'constants/index';
+import * as AirdropVaultABI from 'services/abis/WhitelistVault.json';
+import {DEPLOYED} from 'constants/index';
+
+const {
+  TokamakLayer2_ADDRESS,
+  TON_ADDRESS,
+  TOS_ADDRESS,
+  DepositManager_ADDRESS,
+  SeigManager_ADDRESS,
+  WTON_ADDRESS,
+  Stake1Proxy_ADDRESS,
+  Airdrop_ADDRESS,
+} = DEPLOYED;
 
 // returns the checksummed address if the address is valid, otherwise returns false
 export function isAddress(value: any): string | false {
@@ -53,40 +51,35 @@ export function getProviderOrSigner(
   return account ? getSigner(library, account) : library;
 }
 
-export function getRPC(): JsonRpcProvider {
-  // return new JsonRpcProvider('https://rinkeby.rpc.tokamak.network');
-  return new JsonRpcProvider(
-    'https://mainnet.infura.io/v3/34448178b25e4fbda6d80f4da62afba2',
-  );
-}
-
-export function getTokamakContract(want: string, address?: string): any {
-  const rpc = getRPC();
-
-  const TON = new Contract(REACT_APP_TON, TonABI.abi, rpc);
-  const WTON = new Contract(REACT_APP_WTON, WtonABI.abi, rpc);
-  const TOS = new Contract(REACT_APP_TOS, TosABI.abi, rpc);
+export function getTokamakContract(
+  want: string,
+  library?: Web3Provider,
+  address?: string,
+): any {
+  const TON = new Contract(TON_ADDRESS, TonABI.abi, library);
+  const WTON = new Contract(WTON_ADDRESS, WtonABI.abi, library);
+  const TOS = new Contract(TOS_ADDRESS, TosABI.abi, library);
   const SeigManager = new Contract(
-    REACT_APP_SEIG_MANAGER,
+    SeigManager_ADDRESS,
     SeigManagerABI.abi,
-    rpc,
+    library,
   );
   const DepositManager = new Contract(
-    REACT_APP_DEPOSIT_MANAGER,
+    DepositManager_ADDRESS,
     DepositManagerABI.abi,
-    rpc,
+    library,
   );
   const TokamakLayer2 = new Contract(
-    REACT_APP_TOKAMAK_LAYER2,
+    TokamakLayer2_ADDRESS,
     CandidateABI.abi,
-    rpc,
+    library,
   );
   const VaultProxy = new Contract(
-    REACT_APP_STAKE1_PROXY,
+    Stake1Proxy_ADDRESS,
     StakeVaultLogic.abi,
-    rpc,
+    library,
   );
-  const Airdrop = new Contract(REACT_APP_AIRDROP, AirdropVaultABI.abi, rpc);
+  const Airdrop = new Contract(Airdrop_ADDRESS, AirdropVaultABI.abi, library);
 
   if (want === 'TON') {
     return TON;
@@ -104,7 +97,7 @@ export function getTokamakContract(want: string, address?: string): any {
     return TokamakLayer2;
   } else if (want === 'StakeTON') {
     if (address) {
-      return new Contract(address, StakeTON.abi, rpc);
+      return new Contract(address, StakeTON.abi, library);
     } else {
       throw Error('Need Contract Address!');
     }
@@ -112,7 +105,7 @@ export function getTokamakContract(want: string, address?: string): any {
     return VaultProxy;
   } else if (want === 'Vault') {
     if (address) {
-      return new Contract(address, StakeVault.abi, rpc);
+      return new Contract(address, StakeVault.abi, library);
     } else {
       throw Error('Need Contract Address!');
     }
@@ -131,7 +124,6 @@ export function getContract(
   if (!isAddress(address) || address === AddressZero) {
     throw Error(`Invalid 'address' parameter '${address}'.`);
   }
-
   return new Contract(
     address,
     ABI,

@@ -23,8 +23,6 @@ import {Scrollbars} from 'react-custom-scrollbars-2';
 import {LoadingComponent} from 'components/Loading';
 import {fetchAirdropPayload} from './utils/fetchAirdropPayload';
 import {selectUser} from 'store/app/user.reducer';
-import {convertNumber} from 'utils/number';
-// import { convertNumber } from '../../utils/number';
 
 type Round = {
   allocatedAmount: string;
@@ -83,25 +81,27 @@ export const AirdropModal = () => {
   const availableAmount = (
     roundInfo: AirDropList,
     claimedAmount: string | undefined,
+    unclaimedAmount: string | undefined,
   ) => {
     if (roundInfo !== undefined && claimedAmount !== undefined) {
-      let myBalance = 0;
-      for (let i = 0; i < roundInfo.length; i++) {
-        myBalance += Number(roundInfo[i].myAmount);
-      }
-      const convertedNumber = convertNumber({
-        amount: String(myBalance - Number(claimedAmount)),
-      });
-      return setBalance(convertedNumber);
+      // let myBalance = 0;
+      // for (let i = 0; i < roundInfo.length; i++) {
+      //   myBalance += Number(roundInfo[i].myAmount);
+      // }
+      // const convertedNumber = convertNumber({
+      //   amount: String(myBalance - Number(claimedAmount)),
+      // });
+      return setBalance(unclaimedAmount);
     }
   };
 
   useEffect(() => {
     async function callAirDropData() {
-      const res = await fetchAirdropPayload(account);
-      const {roundInfo, claimedAmount} = res;
+      const res = await fetchAirdropPayload();
+      const {roundInfo, claimedAmount, unclaimedAmount} = res;
+
       setAirdropData(roundInfo);
-      availableAmount(roundInfo, claimedAmount);
+      availableAmount(roundInfo, claimedAmount, unclaimedAmount);
     }
     if (account !== undefined) {
       callAirDropData();
@@ -146,7 +146,6 @@ export const AirdropModal = () => {
             <Text fontSize={'0.813em'} color="blue.300" mb="1.125em">
               Available Balance
             </Text>
-
             <Flex
               style={{marginTop: '0', marginBottom: '2.500em'}}
               height="39px">

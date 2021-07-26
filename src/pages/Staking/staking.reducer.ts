@@ -1,19 +1,16 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {RootState} from 'store/reducers';
-import {getRPC} from 'utils/contract';
-import {period} from 'utils';
 import {TokenType} from 'types/index';
 import {convertNumber} from 'utils/number';
 import store from 'store';
-import {
-  REACT_APP_MAINNET_API,
-  REACT_APP_DEV_API,
-  REACT_APP_MODE,
-} from 'constants/index';
+import {fetchStakeURL} from 'constants/index';
+import {BASE_PROVIDER} from 'constants/index';
 
-const rpc = getRPC();
-
-export type Vault = {};
+export type Vault = {
+  res: [];
+  saleClosed: boolean;
+  period: Object;
+};
 
 export type Stake = {
   name?: string;
@@ -64,14 +61,9 @@ const initialState = {
 
 export const fetchStakes = createAsyncThunk(
   'stakes/all',
-  async ({library, account, chainId, reFetch}: any, {requestId, getState}) => {
+  async ({library, account, reFetch}: any, {requestId, getState}) => {
     //result to dispatch data for Stakes store
     let projects: any[] = [];
-
-    const CHAIN = REACT_APP_MODE === 'DEV' ? '4' : '1';
-    const API_SERVER =
-      REACT_APP_MODE === 'DEV' ? REACT_APP_DEV_API : REACT_APP_MAINNET_API;
-    const fetchStakeUrl = `${API_SERVER}/stakecontracts?chainId=${CHAIN}`;
 
     // @ts-ignore
     const {currentRequestId, loading} = getState().stakes;
@@ -79,20 +71,31 @@ export const fetchStakes = createAsyncThunk(
       return;
     }
 
-    const stakeReq = await fetch(fetchStakeUrl)
+    const stakeReq = await fetch(fetchStakeURL)
       .then((res) => res.json())
       .then((result) => result);
 
     const stakeList = stakeReq.datas;
 
-    const currentBlock = await rpc.getBlockNumber();
+    const currentBlock = await BASE_PROVIDER.getBlockNumber();
 
     const vaultsData = store.getState().vaults.data;
+
     await Promise.all(
       stakeList.map(async (stake: any, index: number) => {
         let mystaked: string = '';
 
         const status = await getStatus(stake, currentBlock);
+        //@ts-ignore
+        const {saleClosed, period} = vaultsData[stake.vault];
+        const periodKey = String(stake.stakeContract).toLowerCase();
+        const stakePeriod = period[periodKey];
+        const res = stakePeriod.includes('year')
+          ? '100.' + stakePeriod
+          : stakePeriod.includes('month')
+          ? '10.' + stakePeriod
+          : stakePeriod;
+
         const stakeInfo: Partial<Stake> = {
           contractAddress: stake.stakeContract,
           name: stake.name,
@@ -108,7 +111,7 @@ export const fetchStakes = createAsyncThunk(
           }),
           token: stake.paytoken,
           stakeType: stake.stakeType,
-          period: period(stake.startBlock, stake.endBlock),
+          period: res,
           saleStartTime: stake.saleStartBlock,
           saleEndTime: stake.startBlock,
           miningStartTime: stake.startBlock,
@@ -118,7 +121,7 @@ export const fetchStakes = createAsyncThunk(
           library,
           account,
           vault: stake.vault,
-          saleClosed: stake.saleClosed,
+          saleClosed,
           ept: getEarningPerTon(vaultsData, stake.vault, stake.endBlock),
         };
         projects.push(stakeInfo);
@@ -148,12 +151,19 @@ const getEarningPerTon = (
   stakeEndBlock: any,
 ) => {
   let result = '';
-  vaultsData[valutAddress].map((project: string) => {
+  vaultsData[valutAddress].res.map((project: string) => {
     if (Number(Object.keys(project).toString()) === stakeEndBlock) {
       result = project[stakeEndBlock];
     }
     return result;
   });
+  if (
+    Number(result) === Infinity ||
+    isNaN(Number(result)) === true ||
+    result === ''
+  ) {
+    return undefined;
+  }
   return Number.parseFloat(result).toFixed(2);
 };
 

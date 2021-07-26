@@ -1,9 +1,10 @@
-import {getSigner, getRPC} from 'utils/contract';
+import {getSigner} from 'utils/contract';
 import {Contract} from '@ethersproject/contracts';
 import * as StakeTON from 'services/abis/StakeTON.json';
 import store from 'store';
 import {setTxPending} from 'store/tx.reducer';
 import {toastWithReceipt} from 'utils';
+import {BASE_PROVIDER} from 'constants/index'
 
 type Unstake = {
   userAddress: string | null | undefined;
@@ -14,11 +15,9 @@ type Unstake = {
   handleCloseModal: any;
 };
 
-const rpc = getRPC();
-
 export const unstake = async (args: Unstake) => {
   const {userAddress, endTime, library, stakeContractAddress, mystaked} = args;
-  const currentBlock = await getRPC().getBlockNumber();
+  const currentBlock = await BASE_PROVIDER.getBlockNumber();
 
   if (userAddress === null || userAddress === undefined) {
     return;
@@ -42,7 +41,7 @@ export const unstake = async (args: Unstake) => {
     const StakeTONContract = await new Contract(
       stakeContractAddress,
       StakeTON.abi,
-      rpc,
+      library,
     );
 
     if (!StakeTONContract) {

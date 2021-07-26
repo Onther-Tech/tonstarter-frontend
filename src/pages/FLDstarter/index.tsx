@@ -39,6 +39,7 @@ export const FLDstarter = () => {
             ) : (
               data.map((item, index) => (
                 <TokenComponent
+                  key={index}
                   data={item}
                   phase={item.name}
                   status={item.status}

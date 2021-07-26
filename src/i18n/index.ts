@@ -8,7 +8,9 @@ const options: InitOptions = {
   interpolation: {
     escapeValue: false, // not needed for react!!
   },
-  debug: true,
+
+  //remove logger
+  debug: false,
   resources: {
     en: {
       common: en.en,
@@ -16,7 +18,6 @@ const options: InitOptions = {
   },
 
   fallbackLng: 'en',
-
   ns: ['common'],
 
   defaultNS: 'common',

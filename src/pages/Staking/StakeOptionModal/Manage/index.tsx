@@ -15,20 +15,88 @@ import {
 } from '@chakra-ui/react';
 import {useAppDispatch, useAppSelector} from 'hooks/useRedux';
 import {closeModal, openModal, selectModalType} from 'store/modal.reducer';
+import {useState, useEffect} from 'react';
+// import {fetchStakedBalancePayload} from '../utils/fetchStakedBalancePayload';
 
 export const ManageModal = () => {
   const {data} = useAppSelector(selectModalType);
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  /*eslint-disable*/
+  const [saleDisabled, setSaleDisabled] = useState(true);
+  const [stakeL2Disabled, setStakeL2Disabled] = useState(true);
+  const [swapDisabled, setSwapDisabled] = useState(true);
   const {colorMode} = useColorMode();
   let balance = data?.data?.stakeContractBalanceTon;
-  let closed;
+  let closed: any;
 
   try {
     closed = data?.data?.saleClosed;
   } catch (e) {
     console.log(e);
   }
+  const [stakedBalance, setStakedBalance] = useState<string | undefined>('-');
+
+  // const GetStakedBalance = ({title, contractAddress, user}: any) => {
+  //   async function getStakedBalance() {
+  //     const result = await fetchStakedBalancePayload(
+  //       user.address,
+  //       contractAddress,
+  //     );
+  //     // stakeContractBalanceTon
+  //     if (title === 'Total') {
+  //       return setStakedBalance(result.totalStakedAmount);
+  //     } else if (title === 'Staked in Layer 2') {
+  //       return setStakedBalance(result.totalStakedAmountL2);
+  //     }
+  //     setStakedBalance(result.totalPendingUnstakedAmountL2);
+  //   }
+  //   getStakedBalance();
+
+  //   return (
+  //     <Flex justifyContent="space-between" alignItems="center" h="55px">
+  //       <Text color={'gray.400'} fontSize="13px" fontWeight={500}>
+  //         {title}
+  //       </Text>
+  //       <Text
+  //         color={colorMode === 'light' ? 'gray.250' : 'white.100'}
+  //         fontWeight={500}
+  //         fontSize={'18px'}>
+  //         {stakedBalance === '-' ? <LoadingDots></LoadingDots> : stakedBalance}{' '}
+  //         TON
+  //       </Text>
+  //     </Flex>
+  //   );
+  // };
+
+  const btnDisableEndSale = () => {
+    return data.data?.fetchBlock < data.data?.miningStartTime || closed
+      ? setSaleDisabled(true)
+      : setSaleDisabled(false);
+  };
+
+  const btnDisableStakeL2 = () => {
+    return data.data?.fetchBlock >
+      data.data?.miningEndTime - Number(data.data?.globalWithdrawalDelay) ||
+      !closed
+      ? setStakeL2Disabled(true)
+      : setStakeL2Disabled(false);
+  };
+
+  const btnDisableSwap = () => {
+    return data.data?.fetchBlock > data.data?.miningEndTime || !closed
+      ? setSwapDisabled(true)
+      : setSwapDisabled(false);
+  };
+
+  const {btnStyle} = theme;
+
+  useEffect(() => {
+    btnDisableEndSale();
+    btnDisableStakeL2();
+    btnDisableSwap();
+    /*eslint-disable*/
+  }, [data, dispatch]);
 
   return (
     <Modal
@@ -136,7 +204,10 @@ export const ManageModal = () => {
               color={'white.100'}
               fontSize={'0.750em'}
               fontWeight={100}
-              isDisabled={closed ? !closed : false}
+              {...(stakeL2Disabled === true
+                ? {...btnStyle.btnDisable({colorMode})}
+                : {...btnStyle.btnAble()})}
+              isDisabled={stakeL2Disabled}
               onClick={() =>
                 dispatch(openModal({type: 'stakeL2', data: data.data}))
               }
@@ -150,7 +221,10 @@ export const ManageModal = () => {
               fontSize={'12px'}
               fontWeight={100}
               _hover={{backgroundColor: 'blue.100'}}
-              isDisabled={closed ? !closed : false}
+              {...(swapDisabled === true
+                ? {...btnStyle.btnDisable({colorMode})}
+                : {...btnStyle.btnAble()})}
+              isDisabled={swapDisabled}
               onClick={() =>
                 dispatch(openModal({type: 'unstakeL2', data: data.data}))
               }>
@@ -163,7 +237,10 @@ export const ManageModal = () => {
               fontSize={'12px'}
               fontWeight={100}
               _hover={{backgroundColor: 'blue.100'}}
-              isDisabled={closed ? !closed : false}
+              {...(swapDisabled === true
+                ? {...btnStyle.btnDisable({colorMode})}
+                : {...btnStyle.btnAble()})}
+              isDisabled={swapDisabled}
               onClick={() =>
                 dispatch(openModal({type: 'withdraw', data: data.data}))
               }>
@@ -176,7 +253,10 @@ export const ManageModal = () => {
               fontSize={'12px'}
               fontWeight={100}
               _hover={{backgroundColor: 'blue.100'}}
-              isDisabled={closed ? !closed : false}
+              {...(swapDisabled === true
+                ? {...btnStyle.btnDisable({colorMode})}
+                : {...btnStyle.btnAble()})}
+              isDisabled={swapDisabled}
               onClick={() =>
                 dispatch(openModal({type: 'swap', data: data.data}))
               }>

@@ -2,8 +2,10 @@ import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {RootState} from 'store/reducers';
 import {getContract} from 'utils/contract';
 import * as ERC20 from 'services/abis/ERC20.json';
-import {REACT_APP_TON} from 'constants/index';
+import {DEPLOYED} from 'constants/index';
 import {convertNumber} from 'utils/number';
+
+// const {TON_ADDRESS} = DEPLOYED;
 
 export type User = {
   balance: string;
@@ -45,7 +47,7 @@ export const fetchUserInfo = createAsyncThunk(
     // let tonBalance;
     // let tosBalance;
 
-    const contract = getContract(REACT_APP_TON, ERC20.abi, library);
+    const contract = getContract(DEPLOYED.TON_ADDRESS, ERC20.abi, library);
     // const TOS = getTokamakContract('TOS');
     // const TosBalance = await TOS.balanceOf(address);
 

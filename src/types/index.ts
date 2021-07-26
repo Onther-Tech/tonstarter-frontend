@@ -5,7 +5,7 @@ export type StakingTableProps = {
   period: string;
   apy: string;
   total_staked: string;
-  earning_per_block: string;
+  earning_per_ton: string;
   staked: string;
   earned: string;
 };

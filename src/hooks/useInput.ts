@@ -5,10 +5,10 @@ export const useInput = () => {
   const onChange = (event: any) => {
     const {target} = event;
     const {value: inputValue} = target;
-    // if (isNaN(Number(inputValue)) === false) {
-    //   return;
-    // }
     const _val = inputValue;
+    if (addComma(_val) === undefined) {
+      return;
+    }
     setValue(addComma(_val));
   };
   return {value, setValue, onChange};
@@ -24,15 +24,16 @@ const addComma = (inputVal: any) => {
     if (_val.split('.').length > 2) {
       return;
     }
-    if (_val.length > 0 && _val.substring(0, 1) === '0') {
-      if (_val.split('.').length > 1) {
-        return _val;
-      }
-
-      return _val.substring(1, 2);
+    if (
+      _val.split('.')[0]?.length > 1 &&
+      _val.split('.')[0]?.substring(0, 1) === '0'
+    ) {
+      return _val.split('.')[0].substring(1);
     }
+
+    //   return _val.substring(1, 2);
+    // }
     if (_val === '.') {
-      console.log('c');
       return _val;
     } else {
       return _val
@@ -42,4 +43,45 @@ const addComma = (inputVal: any) => {
   };
 
   return checkInputVal();
+};
+
+export const onKeyDown = (e: any) => {
+  const {target, key} = e;
+  //@ts-ignore
+  const {selectionStart, value} = target;
+  const allowedKeys = [
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '.',
+    'Backspace',
+    'Delete',
+    'ArrowRight',
+    'ArrowLeft',
+  ];
+
+  //check number or .
+  if (allowedKeys.indexOf(key) === -1) {
+    e.preventDefault();
+  }
+
+  if (key === 'Delete' && value.split('')[selectionStart] === ',') {
+    //@ts-ignore
+    return (e.target.selectionStart = selectionStart);
+  }
+  if (key === 'ArrowRight' && value.split('')[selectionStart + 1] === ',') {
+    //@ts-ignore
+    e.target.selectionStart += 2;
+  }
+  if (key === 'ArrowLeft' && value.split('')[selectionStart - 2] === ',') {
+    //@ts-ignore
+    e.target.selectionStart -= 2;
+  }
 };

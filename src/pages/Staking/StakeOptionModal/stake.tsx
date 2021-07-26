@@ -18,20 +18,25 @@ import {useWeb3React} from '@web3-react/core';
 import {useAppSelector} from 'hooks/useRedux';
 import {selectModalType} from 'store/modal.reducer';
 import {stakePayToken} from '../actions';
-import {useInput} from 'hooks/useInput';
+import {onKeyDown, useInput} from 'hooks/useInput';
 import {useModal} from 'hooks/useModal';
+import {useToast} from 'hooks/useToast';
 
 export const StakeOptionModal = () => {
   const {data} = useAppSelector(selectModalType);
   const {account, library} = useWeb3React();
+  const {colorMode} = useColorMode();
+  const theme = useTheme();
+  const {toastMsg} = useToast();
 
   let balance = data?.data?.user?.balance;
-  const theme = useTheme();
-  const {colorMode} = useColorMode();
+  const {btnStyle} = theme;
   const {value, setValue, onChange} = useInput();
-  const {handleCloseModal} = useModal(setValue);
-
+  const {handleCloseModal, handleOpenConfirmModal} = useModal(setValue);
   const setMax = useCallback((_e) => setValue(balance), [setValue, balance]);
+  const keys = [undefined, '', '0', '0.', '0.0', '0.00'];
+  const btnDisabled = keys.indexOf(value) !== -1 ? true : false;
+  const period = data?.data?.period;
 
   return (
     <Modal
@@ -80,30 +85,7 @@ export const StakeOptionModal = () => {
               value={value}
               w="60%"
               mr={6}
-              onKeyDown={(e) => {
-                const {target, keyCode} = e;
-                //@ts-ignore
-                const {selectionStart, value} = target;
-
-                if (keyCode === 46 && value.split('')[selectionStart] === ',') {
-                  //@ts-ignore
-                  return (e.target.selectionStart = selectionStart);
-                }
-                if (
-                  keyCode === 39 &&
-                  value.split('')[selectionStart + 1] === ','
-                ) {
-                  //@ts-ignore
-                  e.target.selectionStart += 2;
-                }
-                if (
-                  keyCode === 37 &&
-                  value.split('')[selectionStart - 2] === ','
-                ) {
-                  //@ts-ignore
-                  e.target.selectionStart -= 2;
-                }
-              }}
+              onKeyDown={onKeyDown}
               onChange={onChange}
               _focus={{
                 borderWidth: 0,
@@ -144,23 +126,42 @@ export const StakeOptionModal = () => {
 
           <Box as={Flex} justifyContent={'center'}>
             <Button
+              {...(btnDisabled === true
+                ? {...btnStyle.btnDisable({colorMode})}
+                : {...btnStyle.btnAble()})}
               w={'150px'}
-              bg={'blue.500'}
-              color="white.100"
               fontSize="14px"
               _hover={{...theme.btnHover}}
-              onClick={() =>
-                stakePayToken({
-                  userAddress: account,
-                  amount: value.replaceAll(',', ''),
-                  payToken: data.data.token,
-                  saleStartTime: data.data.saleStartTime,
-                  library: library,
-                  stakeContractAddress: data.data.contractAddress,
-                  miningStartTime: data.data.miningStartTime,
-                  handleCloseModal: handleCloseModal(),
-                })
-              }>
+              disabled={btnDisabled}
+              onClick={() => {
+                if (Number(value.replaceAll(',', '')) > Number(balance)) {
+                  return toastMsg({
+                    status: 'error',
+                    title: 'Error',
+                    description: 'Balance is not enough',
+                    duration: 5000,
+                    isClosable: true,
+                  });
+                }
+                handleOpenConfirmModal({
+                  type: 'confirm',
+                  data: {
+                    amount: value,
+                    period,
+                    action: () =>
+                      stakePayToken({
+                        userAddress: account,
+                        amount: value.replaceAll(',', ''),
+                        payToken: data.data.token,
+                        saleStartTime: data.data.saleStartTime,
+                        library: library,
+                        stakeContractAddress: data.data.contractAddress,
+                        miningStartTime: data.data.miningStartTime,
+                        handleCloseModal: handleCloseModal(),
+                      }),
+                  },
+                });
+              }}>
               Stake
             </Button>
           </Box>

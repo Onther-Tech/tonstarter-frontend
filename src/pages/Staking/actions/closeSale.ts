@@ -1,9 +1,8 @@
-import {getSigner, getRPC} from 'utils/contract';
+import {getSigner} from 'utils/contract';
 import {Contract} from '@ethersproject/contracts';
 import store from 'store';
 import {setTxPending} from 'store/tx.reducer';
 import {toastWithReceipt} from 'utils';
-// import {REACT_APP_STAKE1_PROXY} from 'constants/index';
 import {DEPLOYED} from 'constants/index';
 import * as StakeVault from 'services/abis/Stake1Logic.json';
 
@@ -15,19 +14,16 @@ type Endsale = {
   handleCloseModal: any;
 };
 
-const rpc = getRPC();
-
 export const closeSale = async (args: Endsale) => {
   const {userAddress, vaultContractAddress, library} = args;
   if (userAddress === null || userAddress === undefined) {
     return;
   }
-  console.log(DEPLOYED.Stake1Proxy);
 
   const stakeVault = await new Contract(
-    DEPLOYED.Stake1Proxy,
+    DEPLOYED.Stake1Proxy_ADDRESS,
     StakeVault.abi,
-    rpc,
+    library,
   );
   const signer = getSigner(library, userAddress);
   try {

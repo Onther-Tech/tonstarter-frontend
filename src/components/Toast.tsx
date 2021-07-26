@@ -8,6 +8,7 @@ export const Toast = () => {
   const toast = useToast();
   const {data, loading, currentRequestId} = useAppSelector(selectToast);
   const [view, setView] = useState(false);
+
   useEffect(() => {
     if (currentRequestId !== undefined) {
       setView(true);
@@ -20,7 +21,7 @@ export const Toast = () => {
         ? toast(
             //@ts-ignore
             data,
-          )
+          ) && setView(false)
         : null}
     </>
   );

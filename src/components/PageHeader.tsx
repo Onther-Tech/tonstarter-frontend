@@ -17,7 +17,7 @@ export const PageHeader: FC<HeadProps> = ({title, subtitle}) => {
   const {colorMode} = useColorMode();
   const theme = useTheme();
   return (
-    <Container pt={12} w="800px">
+    <Container pt={12} maxW={'100%'}>
       <Flex flexDir="column" alignItems="center" justifyContent="center">
         <Heading
           fontWeight={'bold'}

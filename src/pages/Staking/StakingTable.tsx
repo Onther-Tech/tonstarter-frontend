@@ -10,7 +10,7 @@ import {
   chakra,
   Text,
   Flex,
-  IconButton,
+  // IconButton,
   Tooltip,
   Select,
   Box,
@@ -21,7 +21,7 @@ import {
   Image,
 } from '@chakra-ui/react';
 import tooltipIcon from 'assets/svgs/input_question_icon.svg';
-import {ChevronRightIcon, ChevronLeftIcon} from '@chakra-ui/icons';
+// import {ChevronRightIcon, ChevronLeftIcon} from '@chakra-ui/icons';
 import './staking.css';
 import {checkTokenType} from 'utils/token';
 import {TriangleUpIcon, TriangleDownIcon} from '@chakra-ui/icons';
@@ -30,7 +30,6 @@ import {useAppSelector} from 'hooks/useRedux';
 import {useEffect} from 'react';
 import {setTimeout} from 'timers';
 import {LoadingComponent} from 'components/Loading';
-import {useWindowDimensions} from 'hooks/useWindowDimentions';
 
 type StakingTableProps = {
   columns: Column[];
@@ -109,14 +108,14 @@ export const StakingTable: FC<StakingTableProps> = ({
     headerGroups,
     prepareRow,
     visibleColumns,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
+    // canPreviousPage,
+    // canNextPage,
+    // pageOptions,
     page,
     nextPage,
-    previousPage,
-    setPageSize,
-    state: {pageIndex, pageSize},
+    // previousPage,
+    // setPageSize,
+    // state: {pageIndex, pageSize},
   } = useTable(
     {columns, data, initialState: {pageIndex: 0}},
     useSortBy,
@@ -155,21 +154,24 @@ export const StakingTable: FC<StakingTableProps> = ({
     contractAddress === undefined ? '' : contractAddress,
   );
 
-  const goPrevPage = () => {
-    setIsOpen('');
-    previousPage();
-  };
+  // const goPrevPage = () => {
+  //   setIsOpen('');
+  //   previousPage();
+  // };
 
-  const goNextPage = () => {
-    setIsOpen('');
-    nextPage();
-  };
+  // const goNextPage = () => {
+  //   setIsOpen('');
+  //   nextPage();
+  // };
 
   const onChangeSelectBox = (e: any) => {
     const filterValue = e.target.value;
     headerGroups[0].headers.map((e) => {
       if (e.Header === filterValue) {
-        e.toggleSortBy();
+        if (e.Header === 'Earning Per TON') {
+          return e.toggleSortBy();
+        }
+        e.toggleSortBy(true);
       }
       return null;
     });
@@ -188,11 +190,7 @@ export const StakingTable: FC<StakingTableProps> = ({
   const renderBtn = (contractAddress: string, index: number) => {
     if (isOpen === contractAddress)
       return (
-        <Flex
-          w={'100%'}
-          justifyContent="flex-end"
-          onClick={() => setIsOpen('')}
-          _hover={{cursor: 'pointer'}}>
+        <Flex w={'100%'} justifyContent="flex-end" _hover={{cursor: 'pointer'}}>
           <TriangleUpIcon color="blue.100" _hover={{cursor: 'pointer'}} />
         </Flex>
       );
@@ -200,7 +198,7 @@ export const StakingTable: FC<StakingTableProps> = ({
       <Flex
         w={'100%'}
         justifyContent="flex-end"
-        onClick={() => clickOpen(contractAddress, index)}
+        // onClick={() => clickOpen(contractAddress, index)}
         _hover={{cursor: 'pointer'}}>
         <TriangleDownIcon
           color="blue.100"
@@ -209,11 +207,9 @@ export const StakingTable: FC<StakingTableProps> = ({
     );
   };
 
-  const {height} = useWindowDimensions();
-
   if (isLoading === true || data.length === 0) {
     return (
-      <Center h={height - 363}>
+      <Center>
         <LoadingComponent />
       </Center>
     );
@@ -232,12 +228,12 @@ export const StakingTable: FC<StakingTableProps> = ({
           h={'32px'}
           color={'#86929d'}
           fontSize={'13px'}
-          placeholder="On sale Sort"
+          placeholder="On Sale Sort"
           onChange={onChangeSelectBox}>
           <option value="name">Name</option>
           <option value="period">Period</option>
-          <option value="total staked">Total staked</option>
-          <option value="Earning Per Block">Earning per block</option>
+          <option value="total staked">Total Staked</option>
+          <option value="Earning Per TON">Earning Per TON</option>
         </Select>
       </Flex>
       <Box overflowX={'auto'}>
@@ -279,6 +275,14 @@ export const StakingTable: FC<StakingTableProps> = ({
                   ref={(el) => (focusTarget.current[i] = el)}
                   h={16}
                   key={i}
+                  onClick={() => {
+                    if (isOpen === contractAddress) {
+                      setIsOpen('');
+                    } else {
+                      clickOpen(contractAddress, i);
+                    }
+                  }}
+                  cursor={'pointer'}
                   borderRadius={'10px'}
                   borderBottomRadius={
                     isOpen === contractAddress ? '0px' : '10px'
@@ -312,7 +316,7 @@ export const StakingTable: FC<StakingTableProps> = ({
                             ? '150px'
                             : type === 'stakeBalanceTON'
                             ? '200px'
-                            : type === 'earning_per_block'
+                            : type === 'earning_per_ton'
                             ? ''
                             : '200px'
                         }
@@ -350,7 +354,7 @@ export const StakingTable: FC<StakingTableProps> = ({
                               }>
                               Period
                             </Text>
-                            <Text>{period}</Text>
+                            <Text>{period.split('.')[1]}</Text>
                           </>
                         ) : (
                           ''
@@ -370,7 +374,7 @@ export const StakingTable: FC<StakingTableProps> = ({
                           ''
                         )}
 
-                        {type === 'earning_per_block' ? (
+                        {type === 'earning_per_ton' ? (
                           <>
                             <Text
                               mr={2}
@@ -380,14 +384,8 @@ export const StakingTable: FC<StakingTableProps> = ({
                               Earning Per TON
                             </Text>
                             <Text w={120}>
-                              {ept.includes('Infinity') === true ||
-                              ept.includes('NaN') === true
-                                ? null
-                                : ept}{' '}
-                              {ept.includes('Infinity') === true ||
-                              ept.includes('NaN') === true
-                                ? null
-                                : 'TOS'}{' '}
+                              {ept === undefined ? null : ept}{' '}
+                              {ept === undefined ? null : 'TOS'}{' '}
                             </Text>
                             <Tooltip
                               hasArrow
@@ -450,6 +448,9 @@ export const StakingTable: FC<StakingTableProps> = ({
         Pagination can be built however you'd like. 
         This is just a very basic UI implementation:
       */}
+
+        {/* 
+        PAGENATION FOR LATER
         <Flex justifyContent="flex-end" my={4} alignItems="center">
           <Flex>
             <Tooltip label="Previous Page">
@@ -482,48 +483,18 @@ export const StakingTable: FC<StakingTableProps> = ({
             fontFamily={theme.fonts.roboto}
             color={colorMode === 'light' ? '#3a495f' : '#949494'}
             pb={'3px'}>
-            <Text flexShrink={0}>
-              Page{' '}
-              <Text fontWeight="bold" as="span" color={'blue.300'}>
-                {pageIndex + 1}
-              </Text>{' '}
-              of{' '}
-              <Text fontWeight="bold" as="span">
-                {pageOptions.length}
-              </Text>
+            Page{' '}
+            <Text fontWeight="bold" as="span" color={'blue.300'}>
+              {pageIndex + 1}
+            </Text>{' '}
+            of{' '}
+            <Text fontWeight="bold" as="span">
+              {pageOptions.length}
             </Text>
-
-            {/* <Text flexShrink={0}>Go to page:</Text>{' '}
-          <NumberInput
-            ml={2}
-            mr={8}
-            w={28}
-            min={1}
-            max={pageOptions.length}
-            onChange={(value: any) => {
-              const page = value ? value - 1 : 0;
-              gotoPage(page);
-            }}
-            defaultValue={pageIndex + 1}>
-            <NumberInputField />
-            <NumberInputStepper>
-              <NumberIncrementStepper />
-              <NumberDecrementStepper />
-            </NumberInputStepper>
-          </NumberInput> */}
           </Flex>
 
           <Flex>
             <Tooltip label="Next Page">
-              {/* <IconButton
-                aria-label={'Next Page'}
-                onClick={nextPage}
-                size={'sm'}
-                isDisabled={!canNextPage}
-                icon={<ChevronRightIcon h={6} w={6} />}
-                ml={4}
-                mr={'1.5625em'}
-              /> */}
               <Center>
                 <IconButton
                   w={'24px'}
@@ -572,18 +543,8 @@ export const StakingTable: FC<StakingTableProps> = ({
                 </option>
               ))}
             </Select>
-
-            {/* <Tooltip label="Last Page">
-            <IconButton
-              aria-label={'Last Page'}
-              onClick={() => gotoPage(pageCount - 1)}
-              isDisabled={!canNextPage}
-              icon={<ArrowRightIcon h={3} w={3} />}
-              ml={4}
-            />
-          </Tooltip> */}
           </Flex>
-        </Flex>
+        </Flex> */}
       </Box>
     </Flex>
   );

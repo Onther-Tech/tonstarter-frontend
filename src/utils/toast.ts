@@ -1,3 +1,4 @@
+// import {fetchStakes} from 'pages/Staking/staking.reducer';
 import {openToast} from 'store/app/toast.reducer';
 import store from '../store';
 import {fetchUserInfo} from '../store/app/user.reducer';
@@ -12,8 +13,8 @@ export const toastWithReceipt = async (
       //@ts-ignore
       openToast({
         payload: {
-          title: 'Tx sent successfully! ',
-          description: `Tx hash is ${recepit.hash}`,
+          title: 'Success',
+          description: `Tx is being successfully pending!`,
           status: 'success',
           duration: 5000,
           isClosable: true,
@@ -29,6 +30,12 @@ export const toastWithReceipt = async (
           const {address, library} = store.getState().user.data;
           //@ts-ignore
           store.dispatch(fetchUserInfo({address, library}));
+          // setTimeout(() => {
+          //   //fetch server
+          //   const user = store.getState().user.data;
+          //   const {address: account, library} = user;
+          //   store.dispatch(fetchStakes({account, library}) as any);
+          // }, 0);
         }
       })
       .catch((e: any) => console.log(e));

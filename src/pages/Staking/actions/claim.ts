@@ -1,9 +1,10 @@
-import {getSigner, getRPC} from 'utils/contract';
+import {getSigner} from 'utils/contract';
 import {Contract} from '@ethersproject/contracts';
 import * as StakeTON from 'services/abis/StakeTON.json';
 import store from 'store';
 import {setTxPending} from 'store/tx.reducer';
 import {toastWithReceipt} from 'utils';
+import {BASE_PROVIDER} from 'constants/index'
 
 type Claim = {
   userAddress: string | null | undefined;
@@ -15,8 +16,6 @@ type Claim = {
   handleCloseModal: any;
 };
 
-const rpc = getRPC();
-
 export const claimReward = async (args: Claim) => {
   const {
     userAddress,
@@ -25,7 +24,7 @@ export const claimReward = async (args: Claim) => {
     library,
     canRewardAmount,
   } = args;
-  const currentBlock = await getRPC().getBlockNumber();
+  const currentBlock = await BASE_PROVIDER.getBlockNumber();
 
   if (userAddress === null || userAddress === undefined) {
     return;
@@ -39,7 +38,7 @@ export const claimReward = async (args: Claim) => {
     const StakeTONContract = await new Contract(
       stakeContractAddress,
       StakeTON.abi,
-      rpc,
+      library,
     );
 
     if (!StakeTONContract) {

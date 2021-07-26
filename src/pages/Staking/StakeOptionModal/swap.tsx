@@ -11,6 +11,7 @@ import {
   Input,
   Stack,
   useTheme,
+  useColorMode,
 } from '@chakra-ui/react';
 import React, {useCallback, useState, useEffect} from 'react';
 import {useWeb3React} from '@web3-react/core';
@@ -23,6 +24,7 @@ export const SwapModal = () => {
   const {account, library} = useWeb3React();
   const {data} = useAppSelector(selectModalType);
   const theme = useTheme();
+  const {colorMode} = useColorMode();
   const dispatch = useAppDispatch();
 
   const stakeBalanceTON = data?.data?.stakeContractBalanceTon;
@@ -68,20 +70,34 @@ export const SwapModal = () => {
       isCentered
       onClose={handleCloseModal}>
       <ModalOverlay />
-      <ModalContent>
-        <ModalBody>
-          <Box my={3} textAlign="center">
+      <ModalContent
+        fontFamily={theme.fonts.roboto}
+        bg={colorMode === 'light' ? 'white.100' : 'black.200'}
+        w="350px"
+        pt="25px"
+        pb="25px">
+        <ModalBody p={0}>
+          <Box 
+            pb={'1.250em'}
+            borderBottom={
+              colorMode === 'light' ? '1px solid #f4f6f8' : '1px solid #373737'
+            }>
             <Heading
-              fontWeight={'normal'}
-              fontSize={'3xl'}
+              fontSize={'1.250em'}
+              fontWeight={'bold'}
+              fontFamily={theme.fonts.titil}
+              color={colorMode === 'light' ? 'gray.250' : 'white.100'}
               textAlign={'center'}>
               Swap
             </Heading>
+            {/* <Text color="gray.175" fontSize={'0.750em'} textAlign={'center'}>
+              
+            </Text> */}
           </Box>
 
           <Stack
+            pt="27px"
             as={Flex}
-            py={10}
             flexDir={'row'}
             justifyContent={'center'}
             alignItems={'center'}
@@ -114,17 +130,26 @@ export const SwapModal = () => {
           </Stack>
 
           <Stack
-            pb={5}
             as={Flex}
             justifyContent={'center'}
-            alignItems={'center'}>
-            <Box textAlign={'center'}>
-              <Text>Available Balance</Text>
-              <Text>{balance} TON</Text>
+            alignItems={'center'}
+            borderBottom={
+              colorMode === 'light' ? '1px solid #f4f6f8' : '1px solid #373737'
+            }
+            mb={'25px'}>
+            <Box textAlign={'center'} pt="33px" pb="13px">
+              <Text fontWeight={500} fontSize={'0.813em'} color={'gray.400'}>
+                Available Balance
+              </Text>
+              <Text
+                fontSize={'18px'}
+                color={colorMode === 'light' ? 'gray.250' : 'white.100'}>
+                {balance} TON
+              </Text>
             </Box>
           </Stack>
 
-          <Box py={4} as={Flex} justifyContent={'center'}>
+          <Box as={Flex} justifyContent={'center'}>
             <Button
               w={'150px'}
               bg={'blue.500'}

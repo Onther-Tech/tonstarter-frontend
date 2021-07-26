@@ -1,11 +1,12 @@
 import {DEPLOYED} from 'constants/index';
-import {getTokamakContract, getSigner, getRPC} from 'utils/contract';
+import {getTokamakContract, getSigner} from 'utils/contract';
 import {convertToWei} from 'utils/number';
 import {utils, ethers} from 'ethers';
 import {setTxPending} from 'store/tx.reducer';
 import store from 'store';
 import {toastWithReceipt} from 'utils';
 import {openToast} from 'store/app/toast.reducer';
+import {BASE_PROVIDER} from 'constants/index';
 
 type StakeProps = {
   userAddress: string | null | undefined;
@@ -40,7 +41,7 @@ export const stakePayToken = async (args: StakeProps) => {
     handleCloseModal,
   } = args;
 
-  if (payToken === DEPLOYED.TON) {
+  if (payToken === DEPLOYED.TON_ADDRESS) {
     await stakeTon({
       userAddress: userAddress,
       amount: amount,
@@ -75,10 +76,10 @@ const stakeTon = async (args: StakeTon) => {
   if (userAddress === null || userAddress === undefined) {
     return;
   }
-  const currentBlock = await getRPC().getBlockNumber();
+  const currentBlock = await BASE_PROVIDER.getBlockNumber();
 
   if (currentBlock > saleStartTime && currentBlock < miningStartTime) {
-    const tonContract = getTokamakContract('TON');
+    const tonContract = getTokamakContract('TON', library);
     if (!tonContract) {
       throw new Error(`Can't find the contract for staking actions`);
     }
@@ -120,7 +121,7 @@ const stakeTon = async (args: StakeTon) => {
         payload: {
           status: 'error',
           title: 'Tx fail to send',
-          description: `staking period has ended`,
+          description: `something went wrong`,
           duration: 5000,
           isClosable: true,
         },
@@ -142,7 +143,7 @@ const stakeEth = async (args: StakeTon) => {
   if (userAddress === null || userAddress === undefined) {
     return;
   }
-  const currentBlock = await getRPC().getBlockNumber();
+  const currentBlock = await BASE_PROVIDER.getBlockNumber();
 
   if (currentBlock > saleStartTime && currentBlock < miningStartTime) {
     const transactionRequest: any = {
@@ -154,7 +155,7 @@ const stakeEth = async (args: StakeTon) => {
     try {
       const receipt = await signer.sendTransaction(transactionRequest);
       store.dispatch(setTxPending({tx: true}));
-      alert(`Tx is being pending! Tx hash is ${receipt.hash}`);
+      alert(`Tx is being successfully pending!`);
       if (receipt) {
         store.dispatch(setTxPending({tx: false}));
       }

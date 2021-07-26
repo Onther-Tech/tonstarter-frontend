@@ -1,13 +1,40 @@
 import {useAppDispatch} from 'hooks/useRedux';
-import {closeModal} from 'store/modal.reducer';
+import store from 'store';
+import {
+  closeModal,
+  closeConfirmModal,
+  openConfirm,
+  SubModalPayload,
+} from 'store/modal.reducer';
 
 export const useModal = (
-  setValue: React.Dispatch<React.SetStateAction<any>>,
+  setValue?: React.Dispatch<React.SetStateAction<any>>,
 ) => {
   const dispatch = useAppDispatch();
   const handleCloseModal = () => {
-    setValue('0');
+    if (setValue) {
+      setValue('0');
+    }
     dispatch(closeModal());
   };
-  return {handleCloseModal};
+
+  const handleOpenConfirmModal = ({type, data}: SubModalPayload) => {
+    dispatch(openConfirm({type, data}));
+  };
+  const handleCloseConfirmModal = () => {
+    dispatch(closeConfirmModal());
+  };
+  const handleCheckConfirm = () => {
+    dispatch(closeConfirmModal());
+  };
+  const isConfirmed = () => {
+    return store.getState().modal.sub.isChecked;
+  };
+  return {
+    handleCloseModal,
+    handleOpenConfirmModal,
+    handleCloseConfirmModal,
+    handleCheckConfirm,
+    isConfirmed,
+  };
 };

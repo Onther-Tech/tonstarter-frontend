@@ -1,11 +1,7 @@
 import {
   Container,
-  Center,
   Box,
   Text,
-  Heading,
-  Button,
-  Grid,
   Flex,
   Link,
   useColorMode,
@@ -15,12 +11,12 @@ import {IconClose} from 'components/Icons/IconClose';
 import {IconOpen} from 'components/Icons/IconOpen';
 import {Head} from 'components/SEO';
 import {useAppDispatch, useAppSelector} from 'hooks/useRedux';
-import React, {FC, Fragment, useCallback, useMemo} from 'react';
+import React, {Fragment, useCallback, useMemo} from 'react';
 import {shortenAddress} from 'utils';
 import {StakingTable} from './StakingTable';
 import {selectStakes} from './staking.reducer';
 import {selectApp} from 'store/app/app.reducer';
-import {selectUser, User} from 'store/app/user.reducer';
+import {selectUser} from 'store/app/user.reducer';
 import {PageHeader} from 'components/PageHeader';
 import {
   ClaimOptionModal,
@@ -31,31 +27,14 @@ import {
   WithdrawalOptionModal,
   SwapModal,
 } from './StakeOptionModal';
-import {AppDispatch} from 'store';
-import {openModal, closeModal} from 'store/modal.reducer';
+import {WalletInformation} from './components/WalletInformation';
 import {ManageModal} from './StakeOptionModal/Manage/index';
 import {formatStartTime} from 'utils/timeStamp';
 import {useState} from 'react';
-import {Stake} from './staking.reducer';
-import {fetchManageModalPayload} from './utils';
-import {ModalType} from 'store/modal.reducer';
-import {LoadingComponent} from 'components/Loading';
-import {
-  getTotalStakers,
-  getUserBalance,
-  getUserTonBalance,
-} from 'client/getUserBalance';
+import {getTotalStakers, getUserBalance} from 'client/getUserBalance';
 //@ts-ignore
-import {Dot} from 'react-animated-dots';
 import {useEffect} from 'react';
-import {closeSale} from './actions';
-
-type WalletInformationProps = {
-  dispatch: AppDispatch;
-  data: Stake;
-  user: User;
-  account: string | undefined;
-};
+import {LoadingDots} from 'components/Loader/LoadingDots';
 
 type GetDateTimeType =
   | 'sale-start'
@@ -70,26 +49,25 @@ type GetDateProp = {
   type: GetDateTimeType;
 };
 
-const LoadingDots = () => {
-  return (
-    <Flex h={30}>
-      <Dot>·</Dot>
-      <Dot>·</Dot>
-      <Dot>·</Dot>
-    </Flex>
-  );
-};
-
 const GetDate = ({time, currentBlock, contractAddress, type}: GetDateProp) => {
   const {colorMode} = useColorMode();
   const [date, setDate] = useState('');
-  useMemo(async () => {
+
+  const fetchDate = async () => {
     try {
       const result = await formatStartTime(time, currentBlock);
       setDate(result);
     } catch (e) {
       console.log(e);
     }
+  };
+
+  useEffect(() => {
+    fetchDate();
+    return () => {
+      setDate('');
+    };
+    /*eslint-disable*/
   }, [time, currentBlock]);
 
   return (
@@ -106,236 +84,6 @@ const GetDate = ({time, currentBlock, contractAddress, type}: GetDateProp) => {
         </Text>
       )}
     </>
-  );
-};
-
-const WalletInformation: FC<WalletInformationProps> = ({
-  user,
-  data,
-  dispatch,
-  account,
-}) => {
-  const {colorMode} = useColorMode();
-  const [loading, setLoading] = useState(false);
-  const [userTonBalance, setUserTonBalance] = useState<string>('');
-  const [stakeBalance, setStakeBalance] = useState<string | undefined>(
-    undefined,
-  );
-  const [tosBalance, setTosBalance] = useState<string | undefined>(undefined);
-  const [stakeDisabled, setStakeDisabled] = useState(true);
-  const [unstakeDisabled, setUnstakeDisabled] = useState(true);
-  const [claimDisabled, setClaimDisabled] = useState(true);
-  const [manageDisabled, setManageDisabled] = useState(true);
-  const currentBlock: number = Number(data.fetchBlock);
-  const miningStart: number = Number(data.miningStartTime);
-  const miningEnd: number = Number(data.miningEndTime);
-  const saleStart: number = Number(data.saleStartTime);
-  const endSaleBtnDisabled =
-    account === undefined || miningStart >= currentBlock ? true : false;
-  const manageBtnDisabled =
-    account === undefined || miningEnd <= currentBlock ? true : false;
-
-  const btnDisabledStake = () => {
-    return saleStart >= currentBlock
-      ? setStakeDisabled(false)
-      : setStakeDisabled(false);
-  };
-
-  const btnDisabledUnstake = () => {
-    return account === undefined ||
-      currentBlock < miningEnd ||
-      stakeBalance === undefined ||
-      stakeBalance === '0.00'
-      ? setUnstakeDisabled(true)
-      : setUnstakeDisabled(false);
-  };
-
-  const btnDisabledClaim = () => {
-    return account === undefined ||
-      data.saleClosed === false ||
-      tosBalance === undefined ||
-      tosBalance === '0.00'
-      ? setClaimDisabled(true)
-      : setClaimDisabled(false);
-  };
-
-  const manageDisableClaim = () => {
-    return account === undefined || data.saleClosed === false
-      ? setManageDisabled(true)
-      : setManageDisabled(false);
-  };
-
-  useEffect(() => {
-    if (user.address !== undefined) {
-      getWalletTonBalance();
-    }
-    btnDisabledStake();
-    btnDisabledUnstake();
-    btnDisabledClaim();
-    manageDisableClaim();
-    /*eslint-disable*/
-  }, [account, data, dispatch, tosBalance]);
-
-  const modalPayload = async (data: any) => {
-    const result = await fetchManageModalPayload(
-      data.library,
-      data.account,
-      data.contractAddress,
-      data.vault,
-    );
-
-    return result;
-  };
-
-  const getWalletTonBalance = async () => {
-    const result = await getUserTonBalance({
-      account: user.address,
-      library: user.library,
-    });
-    const userBalance = await getUserBalance(data.contractAddress);
-
-    if (result && userBalance) {
-      const trimNum = Number(result).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-      });
-      setUserTonBalance(trimNum);
-      setStakeBalance(userBalance.totalStakedBalance);
-      setTosBalance(userBalance.rewardTosBalance);
-    }
-  };
-
-  const modalData = useCallback(async (modal: ModalType) => {
-    setLoading(true);
-    let payload;
-
-    try {
-      if (modal === 'manage' || modal === 'claim') {
-        const payloadModal = await modalPayload(data);
-        payload = {
-          ...data,
-          ...payloadModal,
-          user,
-        };
-      } else if (modal === 'unstake') {
-        const payloadModal = await getUserBalance(data.contractAddress);
-        payload = {
-          ...data,
-          totalStakedBalance: payloadModal?.totalStakedBalance,
-        };
-      } else {
-        payload = {
-          ...data,
-          user,
-        };
-      }
-    } catch (e) {
-      console.log(e);
-      setLoading(false);
-    }
-
-    setLoading(false);
-    dispatch(openModal({type: modal, data: payload}));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const theme = useTheme();
-  const {btnStyle} = theme;
-
-  return (
-    <Container
-      maxW={'sm'}
-      shadow={'md'}
-      borderRadius={'lg'}
-      border={
-        colorMode === 'light' ? 'solid 1px #f4f6f8' : 'solid 1px #373737'
-      }>
-      <Box w={'100%'} p={0} textAlign={'center'} py={10} px={5}>
-        <Heading color={'blue.300'}>{userTonBalance} TON</Heading>
-        <Box py={5}>
-          <Text fontSize={'15px'} color={'gray.400'}>
-            Available in wallet
-          </Text>
-        </Box>
-        <Grid pos="relative" templateColumns={'repeat(2, 1fr)'} gap={6}>
-          <Button
-            {...(stakeDisabled || (account === undefined) === true
-              ? {...btnStyle.btnDisable({colorMode})}
-              : {...btnStyle.btnAble()})}
-            isDisabled={stakeDisabled}
-            fontSize={'14px'}
-            opacity={loading === true ? 0.5 : 1}
-            onClick={() => modalData('stake')}>
-            Stake
-          </Button>
-          <Button
-            {...(unstakeDisabled === true
-              ? {...btnStyle.btnDisable({colorMode})}
-              : {...btnStyle.btnAble()})}
-            isDisabled={unstakeDisabled}
-            fontSize={'14px'}
-            opacity={loading === true ? 0.5 : 1}
-            onClick={() => modalData('unstake')}>
-            Unstake
-          </Button>
-          <Button
-            {...(claimDisabled === true
-              ? {...btnStyle.btnDisable({colorMode})}
-              : {...btnStyle.btnAble()})}
-            isDisabled={claimDisabled}
-            fontSize={'14px'}
-            opacity={loading === true ? 0.5 : 1}
-            onClick={() => modalData('claim')}>
-            Claim
-          </Button>
-          {manageDisabled === true ? (
-            <Button
-              {...(endSaleBtnDisabled === true
-                ? {...btnStyle.btnDisable({colorMode})}
-                : {...btnStyle.btnAble()})}
-              isDisabled={endSaleBtnDisabled}
-              fontSize={'14px'}
-              opacity={loading === true ? 0.5 : 1}
-              onClick={() =>
-                data.miningEndTime !== undefined
-                  ? closeSale({
-                      userAddress: account,
-                      vaultContractAddress: data.vault,
-                      miningEndTime: data.miningEndTime,
-                      library: user.library,
-                      handleCloseModal: dispatch(closeModal()),
-                    })
-                  : null
-              }>
-              End Sale
-            </Button>
-          ) : (
-            <Button
-              {...(manageBtnDisabled === true
-                ? {...btnStyle.btnDisable({colorMode})}
-                : {...btnStyle.btnAble()})}
-              isDisabled={manageBtnDisabled}
-              fontSize={'14px'}
-              opacity={loading === true ? 0.5 : 1}
-              onClick={() => modalData('manage')}>
-              Manage
-            </Button>
-          )}
-
-          {loading === true ? (
-            <Flex
-              pos="absolute"
-              zIndex={100}
-              w="100%"
-              h="100%"
-              alignItems="cneter"
-              justifyContent="center">
-              <Center>
-                <LoadingComponent></LoadingComponent>
-              </Center>
-            </Flex>
-          ) : null}
-        </Grid>
-      </Box>
-    </Container>
   );
 };
 
@@ -357,26 +105,14 @@ export const Staking = () => {
         Header: 'period',
         accessor: 'period',
       },
-      // {
-      //   Header: 'APY',
-      //   accessor: 'apy',
-      // },
       {
         Header: 'total staked',
         accessor: 'stakeBalanceTON',
       },
       {
-        Header: 'Earning Per Block',
-        accessor: 'earning_per_block',
+        Header: 'Earning Per TON',
+        accessor: 'earning_per_ton',
       },
-      // {
-      //   Header: 'My Staked',
-      //   accessor: 'mystaked',
-      // },
-      // {
-      //   Header: 'Earned',
-      //   accessor: 'totalRewardAmount',
-      // },
       {
         // Make an expander cell
         Header: () => null, // No header
@@ -394,14 +130,22 @@ export const Staking = () => {
     [],
   );
 
-  const GetTotalStaker = ({contractAddress}: any) => {
+  const GetTotalStaker = ({contractAddress, library, data}: any) => {
     const {colorMode} = useColorMode();
     const [totalStaker, setTotalStaker] = useState('-');
     const getlInfo = async () => {
-      const res = await getTotalStakers(contractAddress);
+      const res = await getTotalStakers(contractAddress, library);
       setTotalStaker(res);
     };
-    getlInfo();
+
+    useEffect(() => {
+      if (user.address !== undefined) {
+        getlInfo();
+      } else {
+        setTotalStaker(data);
+      }
+    }, []);
+
     return (
       <Flex flexDir={'column'} alignItems={'space-between'}>
         <Text fontSize={'15px'} color="gray.400">
@@ -420,19 +164,28 @@ export const Staking = () => {
   const GetBalance = ({title, contractAddress, user, setStakeValance}: any) => {
     const {colorMode} = useColorMode();
     const [balance, SetBalance] = useState('-');
+
     const getBalance = async () => {
-      const result = await getUserBalance(contractAddress);
-      if (title === 'My staked') {
+      try {
+        const result = await getUserBalance(contractAddress);
+        if (title === 'My staked') {
+          //@ts-ignore
+          return SetBalance(result?.totalStakedBalance);
+        }
         //@ts-ignore
-        return SetBalance(result.totalStakedBalance);
-      }
-      //@ts-ignore
-      SetBalance(result?.rewardTosBalance);
+        SetBalance(result?.rewardTosBalance);
+      } catch (e) {}
     };
 
-    if (user.address !== undefined) {
-      getBalance();
-    }
+    useEffect(() => {
+      if (user.address !== undefined) {
+        getBalance();
+      }
+      return () => {
+        SetBalance('-');
+      };
+      /*eslint-disable*/
+    }, [user]);
 
     if (user.address === undefined) {
       return (
@@ -476,7 +229,7 @@ export const Staking = () => {
 
   const renderRowSubComponent = useCallback(
     ({row}) => {
-      const {account, contractAddress, fetchBlock} = row.original;
+      const {account, contractAddress, fetchBlock, library} = row.original;
       return (
         <Flex
           w="100%"
@@ -514,7 +267,10 @@ export const Staking = () => {
                   : data[row.id]?.miningStartTime}
               </Text>
             </Flex>
-            <GetTotalStaker contractAddress={contractAddress}></GetTotalStaker>
+            <GetTotalStaker
+              contractAddress={contractAddress}
+              library={library}
+              data={data[row.id]?.totalStakers}></GetTotalStaker>
             <GetBalance
               title={'My staked'}
               contractAddress={contractAddress}

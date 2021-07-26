@@ -1,10 +1,11 @@
-import {getTokamakContract, getSigner, getRPC} from 'utils/contract';
+import {getTokamakContract, getSigner} from 'utils/contract';
 import {Contract} from '@ethersproject/contracts';
 import store from 'store';
 import {setTxPending} from 'store/tx.reducer';
 import {convertToWei} from 'utils/number';
-import {REACT_APP_TOKAMAK_LAYER2} from 'constants/index';
+import {DEPLOYED} from 'constants/index';
 import * as StakeTON from 'services/abis/StakeTON.json';
+import {BASE_PROVIDER} from 'constants/index'
 
 type StakeToLayer2 = {
   userAddress: string | null | undefined;
@@ -17,7 +18,7 @@ type StakeToLayer2 = {
   handleCloseModal: any;
 };
 
-const rpc = getRPC();
+const {TokamakLayer2_ADDRESS} = DEPLOYED;
 
 export const stakeL2 = async (args: StakeToLayer2) => {
   const {
@@ -33,9 +34,9 @@ export const stakeL2 = async (args: StakeToLayer2) => {
     return;
   }
 
-  const currentBlock = await getRPC().getBlockNumber();
+  const currentBlock = await BASE_PROVIDER.getBlockNumber();
   const endBlock = Number(miningEndTime);
-  const TON = getTokamakContract('TON');
+  const TON = getTokamakContract('TON', library);
   const tonBalance = await TON.balanceOf(userAddress);
   const tonAmount = convertToWei(amount);
 
@@ -46,7 +47,7 @@ export const stakeL2 = async (args: StakeToLayer2) => {
   } else if (tonBalance < tonAmount) {
     return alert('unsufficient balance!');
   } else {
-    const StakeTONContract = new Contract(contractAddress, StakeTON.abi, rpc);
+    const StakeTONContract = new Contract(contractAddress, StakeTON.abi, library);
     if (!StakeTONContract) {
       throw new Error(`Can't find the contract for staking actions`);
     }
@@ -54,7 +55,7 @@ export const stakeL2 = async (args: StakeToLayer2) => {
     try {
       store.dispatch(setTxPending({tx: true}));
       await StakeTONContract.connect(signer)
-        .tokamakStaking(REACT_APP_TOKAMAK_LAYER2, tonAmount)
+        .tokamakStaking(TokamakLayer2_ADDRESS, tonAmount)
         .then((receipt: any) => {
           alert(`Tx sent successfully! Tx hash is ${receipt?.hash}`);
           store.dispatch(setTxPending({tx: false}));

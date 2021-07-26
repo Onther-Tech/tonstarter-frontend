@@ -1,7 +1,6 @@
 import {ApolloClient, InMemoryCache} from '@apollo/client';
 import {Contract} from '@ethersproject/contracts';
 import * as StakeTON from 'services/abis/StakeTON.json';
-import {getRPC} from 'utils/contract';
 import store from 'store';
 import {convertNumber} from 'utils/number';
 
@@ -52,8 +51,7 @@ const getUserInfo = async (
   account: string,
   contractAddress: string,
 ) => {
-  const rpc = getRPC();
-  const StakeTONContract = new Contract(contractAddress, StakeTON.abi, rpc);
+  const StakeTONContract = new Contract(contractAddress, StakeTON.abi, library);
   const staked = await StakeTONContract?.userStaked(account);
   return {
     userStaked: staked.amount,

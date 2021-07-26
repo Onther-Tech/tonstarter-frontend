@@ -1,4 +1,4 @@
-import {getSigner, getRPC} from 'utils/contract';
+import {getSigner} from 'utils/contract';
 import {setTxPending} from 'store/tx.reducer';
 import store from 'store';
 import {Contract} from '@ethersproject/contracts';
@@ -15,15 +15,13 @@ type UnstakeFromLayer2 = {
   handleCloseModal: any;
 };
 
-const rpc = getRPC();
-
 export const swapWTONtoTOS = async (args: UnstakeFromLayer2) => {
   const {userAddress, amount, contractAddress, library} = args;
   if (userAddress === null || userAddress === undefined) {
     return;
   }
 
-  const StakeTONContract = new Contract(contractAddress, StakeTON.abi, rpc);
+  const StakeTONContract = new Contract(contractAddress, StakeTON.abi, library);
   const amountRay = toWei(amount, 'gether');
   const signer = getSigner(library, userAddress);
   let deadline = Date.now() / 1000 + 900;

@@ -3,7 +3,6 @@ import {WalletModal} from 'components/Wallet';
 import {useDisclosure} from '@chakra-ui/react';
 import {useWeb3React} from '@web3-react/core';
 import {Header} from 'components/Header';
-import {Footer} from 'components/Footer';
 import {FLDstarter} from './FLDstarter';
 import {Staking} from './Staking';
 import {Switch, Route} from 'react-router-dom';
@@ -14,8 +13,11 @@ import {fetchStakes} from './Staking/staking.reducer';
 import {useWindowDimensions} from 'hooks/useWindowDimentions';
 import {AirdropModal} from 'components/Airdrop/Index';
 import {fetchVaults} from './Staking/vault.reducer';
-import {REACT_APP_DEFAULT_NETWORK} from 'constants/index';
+import {DEFAULT_NETWORK} from 'constants/index';
 import {MobilePreOpen} from './PreOpen/Index';
+import {Footer} from 'components/Footer';
+
+import {ConfirmModal} from 'components/Modal';
 
 export interface RouterProps extends HTMLAttributes<HTMLDivElement> {}
 
@@ -24,7 +26,6 @@ export const Router: FC<RouterProps> = () => {
   const [walletState, setWalletState] = useState<string>('');
   const {onOpen, isOpen: isModalOpen, onClose} = useDisclosure();
   const {account, chainId, library, deactivate} = useWeb3React();
-
   //@ts-ignore
   const accountStorage = JSON.parse(window.localStorage.getItem('account'));
 
@@ -32,13 +33,30 @@ export const Router: FC<RouterProps> = () => {
     window.localStorage.setItem('account', JSON.stringify({signIn: false}));
   }
 
+  const fetchToInitialize = async () => {
+    dispatch(
+      fetchVaults({
+        chainId,
+      }) as any,
+    ).then(() => {
+      dispatch(
+        fetchStakes({
+          library,
+          account,
+        }) as any,
+      );
+    });
+  };
+
   useEffect(() => {
-    if (
-      chainId !== Number(REACT_APP_DEFAULT_NETWORK) &&
-      chainId !== undefined
-    ) {
-      return alert('Please use mainnet');
+    if (chainId !== Number(DEFAULT_NETWORK) && chainId !== undefined) {
+      const netType =
+        DEFAULT_NETWORK === 1 ? 'mainnet' : 'Rinkeby Test Network';
+      //@ts-ignore
+      dispatch(fetchUserInfo({reset: true}));
+      return alert(`Please use ${netType}`);
     }
+    /*eslint-disable*/
   }, [chainId]);
 
   useEffect(() => {
@@ -60,57 +78,35 @@ export const Router: FC<RouterProps> = () => {
       if (signIn === false) {
         deactivate();
       } else if (signIn === true) {
-        if (chainId !== Number(REACT_APP_DEFAULT_NETWORK)) {
+        if (chainId !== Number(DEFAULT_NETWORK)) {
           deactivate();
-          window.localStorage.setItem(
+          return window.localStorage.setItem(
             'account',
             JSON.stringify({signIn: false}),
           );
-
-          return alert('please use mainnet!');
         }
 
         // @ts-ignore
         dispatch(fetchUserInfo({address: account, library})).then(() => {
-          dispatch(
-            fetchVaults({
-              chainId,
-            }) as any,
-          ).then(() => {
-            dispatch(
-              fetchStakes({
-                library,
-                account,
-                chainId,
-              }) as any,
-            );
-          });
+          fetchToInitialize();
         });
       }
     }
+    /*eslint-disable*/
   }, [chainId, account, library, dispatch, deactivate]);
 
   useEffect(() => {
     //@ts-ignore
     const accountStorage = JSON.parse(window.localStorage.getItem('account'));
     const {signIn} = accountStorage;
-    if (account === undefined && signIn === false) {
-      dispatch(
-        fetchVaults({
-          chainId,
-        }) as any,
-      ).then(() => {
-        dispatch(
-          fetchStakes({
-            library,
-            account,
-            chainId,
-          }) as any,
-        );
-      });
-      // @ts-ignore
-      // dispatch(fetchUserInfo());
+    if (account === undefined && signIn === true) {
+      window.localStorage.setItem('account', JSON.stringify({signIn: false}));
+      fetchToInitialize();
     }
+    if (account === undefined && signIn === false) {
+      fetchToInitialize();
+    }
+    /*eslint-disable*/
   }, [account, dispatch, library, chainId, deactivate]);
 
   const handleWalletModalOpen = (state: string) => {
@@ -125,7 +121,8 @@ export const Router: FC<RouterProps> = () => {
   }
 
   return (
-    <>
+    <div style={{minHeight: '100vh'}}>
+      <ConfirmModal></ConfirmModal>
       <Header
         account={account}
         walletopen={() => handleWalletModalOpen('wallet')}
@@ -140,6 +137,6 @@ export const Router: FC<RouterProps> = () => {
       <Footer />
       <WalletModal state={walletState} isOpen={isModalOpen} onClose={onClose} />
       <AirdropModal />
-    </>
+    </div>
   );
 };

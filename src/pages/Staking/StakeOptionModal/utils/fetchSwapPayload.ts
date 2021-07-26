@@ -18,12 +18,14 @@ const getSwapInfo = async (
   account: string,
   contractAddress: string,
 ) => {
-  const TOS = getTokamakContract('TOS');
-  let TosBalanceOfContract;
-  try {
-    TosBalanceOfContract = await TOS.balanceOf(contractAddress);
-  } catch (e) {
-    console.log(e);
+  if (contractAddress && library) {
+    const TOS = getTokamakContract('TOS', library);
+    let TosBalanceOfContract;
+    try {
+      TosBalanceOfContract = await TOS.balanceOf(contractAddress);
+    } catch (e) {
+      console.log(e);
+    }
+    return TosBalanceOfContract;
   }
-  return TosBalanceOfContract;
 };

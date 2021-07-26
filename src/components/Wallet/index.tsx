@@ -48,8 +48,7 @@ export const WalletModal: FC<WalletProps> = ({isOpen, onClose}) => {
     useWeb3React();
   const {onCopy} = useClipboard(account as string);
   // @ts-ignore
-  const {data: explorerLink, loading: explorerLinkLoading} =
-    useAppSelector(selectExplorerLink);
+  const {loading: explorerLinkLoading} = useAppSelector(selectExplorerLink);
   // @ts-ignore
   const {data: network, loading: networkLoading} =
     useAppSelector(selectNetwork);
@@ -327,7 +326,7 @@ export const WalletModal: FC<WalletProps> = ({isOpen, onClose}) => {
                     ) : (
                       <Link
                         isExternal
-                        href={`${explorerLink}${account}`}
+                        href={`https://etherscan.io/address/${account}`}
                         fontSize="sm"
                         _hover={{
                           textDecoration: 'none',

@@ -1,54 +1,58 @@
-import {getTokamakContract, getRPC} from 'utils/contract';
+import {getTokamakContract} from 'utils/contract';
 import {BigNumber} from 'ethers';
-import {REACT_APP_TOKAMAK_LAYER2} from 'constants/index';
+import {DEPLOYED, BASE_PROVIDER} from 'constants/index';
 import {convertNumber} from 'utils/number';
 import {range} from 'lodash';
+
+const {TokamakLayer2_ADDRESS} = DEPLOYED;
 
 export const fetchWithdrawPayload = async (
   library: any,
   account: string,
   contractAddress: string,
 ) => {
-  try {
-    const {requestNum, requestIndex} = await getWithdrawableInfo(
-      library,
-      account,
-      contractAddress,
-    );
-    const depositManager = getTokamakContract('DepositManager');
-    const blockNumber = await getRPC().getBlockNumber();
-    const pendingRequests = [];
-    let index = requestIndex;
-
-    /* eslint-disable */
-    for (const _ of range(requestNum)) {
-      pendingRequests.push(
-        await depositManager.withdrawalRequest(
-          REACT_APP_TOKAMAK_LAYER2,
-          contractAddress,
-          index,
-        ),
+  if (contractAddress && library) {
+    try {
+      const {requestNum, requestIndex} = await getWithdrawableInfo(
+        library,
+        account,
+        contractAddress,
       );
-      index++;
+      const depositManager = getTokamakContract('DepositManager', library);
+      const blockNumber = await BASE_PROVIDER.getBlockNumber();
+      const pendingRequests = [];
+      let index = requestIndex;
+  
+      /* eslint-disable */
+      for (const _ of range(requestNum)) {
+        pendingRequests.push(
+          await depositManager.withdrawalRequest(
+            DEPLOYED.TokamakLayer2_ADDRESS,
+            contractAddress,
+            index,
+          ),
+        );
+        index++;
+      }
+      const withdrawableRequests = pendingRequests.filter(
+        (request) => parseInt(request.withdrawableBlockNumber) <= blockNumber,
+      );
+  
+      const initialAmount = BigNumber.from('0');
+      const reducer = (amount: any, request: any) =>
+        amount.add(BigNumber.from(request.amount));
+  
+      const withdrawableAmount = withdrawableRequests.reduce(
+        reducer,
+        initialAmount,
+      );
+      return convertNumber({
+        amount: withdrawableAmount,
+        type: 'ray',
+      });
+    } catch (err) {
+      console.log(err);
     }
-    const withdrawableRequests = pendingRequests.filter(
-      (request) => parseInt(request.withdrawableBlockNumber) <= blockNumber,
-    );
-
-    const initialAmount = BigNumber.from('0');
-    const reducer = (amount: any, request: any) =>
-      amount.add(BigNumber.from(request.amount));
-
-    const withdrawableAmount = withdrawableRequests.reduce(
-      reducer,
-      initialAmount,
-    );
-    return convertNumber({
-      amount: withdrawableAmount,
-      type: 'ray',
-    });
-  } catch (err) {
-    console.log(err);
   }
 };
 
@@ -57,14 +61,11 @@ const getWithdrawableInfo = async (
   account: string,
   contractAddress: string,
 ) => {
-  const depositManager = getTokamakContract('DepositManager');
+  const depositManager = getTokamakContract('DepositManager', library);
   return Promise.all([
-    depositManager.numPendingRequests(
-      REACT_APP_TOKAMAK_LAYER2,
-      contractAddress,
-    ),
+    depositManager.numPendingRequests(TokamakLayer2_ADDRESS, contractAddress),
     depositManager.withdrawalRequestIndex(
-      REACT_APP_TOKAMAK_LAYER2,
+      TokamakLayer2_ADDRESS,
       contractAddress,
     ),
   ]).then((result) => {

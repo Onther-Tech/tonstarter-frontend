@@ -1,11 +1,7 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {RootState} from 'store/reducers';
 import {convertNumber} from 'utils/number';
-import {
-  REACT_APP_MAINNET_API,
-  REACT_APP_DEV_API,
-  REACT_APP_MODE,
-} from 'constants/index';
+import {fetchValutURL} from 'constants/index';
 
 type Vault = {
   // address: AddressDetail;
@@ -15,6 +11,8 @@ type Vault = {
   stakeEndBlock: number;
   expectedStakeEndBlockTotal: [{block: number; stakedTotalString: string}];
   vault: string;
+  saleClosed: boolean;
+  stakeInfos: [];
 };
 
 type VaultList = [Vault];
@@ -42,8 +40,11 @@ const getEarningPerBlock = (vaults: VaultList) => {
       cap,
       expectedStakeEndBlockTotal,
       vault: vaultAddress,
+      saleClosed,
+      stakeInfos,
     } = vault;
     let acc = 0;
+    let period: any = {};
     const totalBlocks = stakeEndBlock - stakeStartBlock;
     const totalReward = convertNumber({
       amount: cap.toLocaleString('fullwide', {useGrouping: false}),
@@ -74,7 +75,13 @@ const getEarningPerBlock = (vaults: VaultList) => {
         }
       },
     );
-    return (result[vaultAddress] = res);
+
+    stakeInfos.map((stake: any) => {
+      const address = stake.stakeAddress.toLowerCase();
+      return (period[address] = stake.memo);
+    });
+
+    return (result[vaultAddress] = {res, saleClosed, period});
   });
 
   return result;
@@ -90,17 +97,11 @@ export const fetchVaults = createAsyncThunk(
       return;
     }
 
-    const CHAIN = REACT_APP_MODE === 'DEV' ? '4' : '1';
-    const API_SERVER =
-      REACT_APP_MODE === 'DEV' ? REACT_APP_DEV_API : REACT_APP_MAINNET_API;
-    const fetchValutUrl = `${API_SERVER}/vaults?chainId=${CHAIN}`;
-
-    const vaultReq = await fetch(fetchValutUrl)
+    const vaultReq = await fetch(fetchValutURL)
       .then((res) => res.json())
       .then((result) => result);
     const vaultData = vaultReq.datas;
-    console.log('***');
-    console.log(vaultData);
+
     const result = getEarningPerBlock(vaultData);
     return result;
   },

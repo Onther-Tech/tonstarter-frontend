@@ -33,6 +33,11 @@ export function convertNumber(args: ConverNumberFunc): string | undefined {
   try {
     const {type, amount, round, decimalPlaces} = args;
     const utils = ethers.utils;
+
+    if (amount === '0' || amount === undefined || amount === '') {
+      return '0.00';
+    }
+
     const numAmount = BigNumber.from(amount);
     const numberType: string = type ? type : 'wei';
     const optRound = round ? round : false;
@@ -78,6 +83,6 @@ export function convertNumber(args: ConverNumberFunc): string | undefined {
         throw new Error(`this type is not valid. It must be "WTON" or "TON"`);
     }
   } catch (e) {
-    console.log(e);
+    // console.log(e);
   }
 }
